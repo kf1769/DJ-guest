@@ -3,6 +3,9 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 
+from django.contrib import auth
+from django.contrib.auth.decorators import login_required
+
 # Create your views here
 def index(request):
 #    return HttpResponse("Hello Django!")
@@ -11,15 +14,21 @@ def login_action(request):
     if request.method == 'POST':
         username = request.POST.get('username','')
         password = request.POST.get('password','')
-        if username == 'admin' and password == 'admin123':
-#            return HttpResponse('login success!')
+        user = auth.authenticate(username=username, password=password)
+        if user is not None:
+            auth.login(request, user) # Log In
+        #if username == 'admin' and password == 'admin123':   > simple way to check account
+#            return HttpResponse('login success!')  >Simple response
             response = HttpResponseRedirect('/event_manage/')
-            response.set_cookie('user',username,3600)
+            #response.set_cookie('user',username,3600) > Using Cookie
+            request.session['user'] = username # Record the info
             return response
         else:
             return render(request,'index.html',{'error':'username or password error!'})
+@login_required
 def event_manage(request):
-    username = request.COOKIES.get('user','')
+    #username = request.COOKIES.get('user','')
+    username = request.session.get('user','') # Read session
     return render(request,"event_manage.html",{"user":username})
 
 
